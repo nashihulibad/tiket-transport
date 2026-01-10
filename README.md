@@ -1,68 +1,99 @@
-# CodeIgniter 4 Application Starter
+# TicketApp – Aplikasi Pengelolaan Tiket Transportasi (CI4 + Ajax + DataTables)
 
-## What is CodeIgniter?
+TicketApp adalah mini aplikasi web untuk pengelolaan tiket transportasi berbasis regional (daerah). Sistem ini mendukung pengaturan master tiket dan master harga (master price) serta transaksi pemesanan tiket oleh customer dengan stok otomatis yang ter-update secara real-time.
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+Aplikasi dibangun sebagai prototype yang clean, cepat, dan mudah dikembangkan untuk skala lebih besar.
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+---
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+## ✨ Fitur Utama
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+### 1) Authentication & Role Based Access
+- Login berbasis email + password (session based)
+- 3 role akses:
+  - **Superadmin**
+  - **Regional Admin**
+  - **Customer**
+- Menu dan hak akses otomatis mengikuti role user
 
-## Installation & updates
+### 2) Master Ticket (Superadmin & Regional Admin)
+- CRUD tiket transportasi dengan informasi:
+  - code (auto generate)
+  - asal, tujuan (dropdown regions)
+  - class: ekonomi / non-ekonomi / luxury
+  - harga otomatis dari master price (reference)
+  - stock, no polisi kendaraan
+  - tanggal & jam keberangkatan
+- Data listing menggunakan DataTables (server-side)
+- **Regional Admin hanya boleh akses data tiket wilayahnya sendiri** (secure di backend)
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+### 3) Master Price (Superadmin Only)
+- CRUD master harga sebagai acuan tiket
+- Kombinasi unik:
+  - region + origin + destination + class
+- Status Active/Inactive untuk kontrol harga
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
+### 4) Order Tiket (Customer)
+- Customer melihat semua tiket dalam tampilan **card-based UI**
+- Tombol “Pesan”
+  - membuat order status `paid`
+  - mengurangi stok otomatis
+- Jika stok habis:
+  - card menjadi abu-abu
+  - tombol pesan nonaktif
+- Jika pesan tiket yang sama:
+  - **tidak membuat baris order baru**
+  - namun menambah qty (cart-like)
+- Cancel order:
+  - menghapus order
+  - stok tiket kembali sesuai qty
 
-## Setup
+---
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+## 🧩 Struktur Database
 
-## Important Change with index.php
+Tabel utama:
+- `users`
+- `roles`
+- `regions`
+- `tickets`
+- `master_prices`
+- `orders`
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+Konsep penting:
+- `origin` & `destination` menggunakan `regions.code` (JKT/BDG/SMG/SBY)
+- `tickets.region_id` mengacu pada origin region (id asal)
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+---
 
-**Please** read the user guide for a better explanation of how CI4 works!
+## ⚙️ Spesifikasi Teknis
 
-## Repository Management
+### Stack Teknologi
+- Backend: **PHP 8.x**
+- Framework: **CodeIgniter 4**
+- Database: **MySQL / MariaDB**
+- Frontend:
+  - **Bootstrap 5**
+  - **jQuery**
+  - **DataTables (AJAX server-side)**
+- Template UI:
+  - Theme warna aksen brand (biru-kuning) + navbar custom
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+### Arsitektur & Konsep Teknis
+- Session-based Authentication
+- Role-based Access Control (RBAC)
+- Soft Delete untuk tabel data inti (tickets, master_prices, orders)
+- Server-side pagination untuk performa data listing
+- AJAX-driven CRUD (modal-based form)
+- Otomatisasi data:
+  - Harga tiket mengambil referensi dari master price
+  - Stok tiket terupdate otomatis berdasarkan transaksi order & cancel
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+---
 
-## Server Requirements
+## 🚀 Cara Install & Menjalankan
 
-PHP version 8.1 or higher is required, with the following extensions installed:
-
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
-
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - If you are still using PHP 7.4 or 8.0, you should upgrade immediately.
-> - The end of life date for PHP 8.1 will be December 31, 2025.
-
-Additionally, make sure that the following extensions are enabled in your PHP:
-
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+### 1) Clone Project
+```bash
+git clone <repo-url>
+cd ticketapp
