@@ -223,6 +223,10 @@ class TicketController extends BaseController
             ->get()
             ->getRowArray();
 
+        if (!$originRegion) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Daerah asal invalid']);
+        }
+
         if ($roleCode === 'regional_admin') {
             $adminRegionId = (int)session()->get('region_id');
 
@@ -234,19 +238,36 @@ class TicketController extends BaseController
             }
         }
 
-        if (!$originRegion) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Daerah asal invalid']);
-        }
+        $origin = strtoupper(trim((string)($post['origin'] ?? '')));
+        $destination = strtoupper(trim((string)($post['destination'] ?? '')));
 
-        if ($originRegion['code'] !== $post['origin']) {
+        if ($originRegion['code'] !== $origin) {
             return $this->response->setJSON(['success' => false, 'message' => 'Asal tidak sesuai region']);
         }
 
-        if ($post['origin'] === $post['destination']) {
+        if ($origin === $destination) {
             return $this->response->setJSON(['success' => false, 'message' => 'Asal dan tujuan tidak boleh sama']);
         }
 
-        $code = 'TKT' . date('YmdHis') . rand(100, 999);
+        // ====== GENERATE CODE: TKT + ORIGIN + DEST + SEQ(3) ======
+        $prefix = 'TKT' . $origin . $destination;
+
+        $lastTicket = $db->table('tickets')
+            ->select('code')
+            ->like('code', $prefix, 'after')
+            ->where('deleted_at', null)
+            ->orderBy('code', 'DESC')
+            ->get()
+            ->getRowArray();
+
+        $nextSeq = 1;
+        if ($lastTicket && isset($lastTicket['code'])) {
+            $lastSeq = (int) substr($lastTicket['code'], -3);
+            $nextSeq = $lastSeq + 1;
+        }
+
+        $code = $prefix . str_pad((string)$nextSeq, 3, '0', STR_PAD_LEFT);
+        // ====== END GENERATE CODE ======
 
         $price = $this->priceModel->find((int)$post['master_price_id']);
         if (!$price) {
@@ -256,8 +277,8 @@ class TicketController extends BaseController
         $this->ticketModel->insert([
             'code' => $code,
             'region_id' => $regionId,
-            'origin' => $post['origin'],
-            'destination' => $post['destination'],
+            'origin' => $origin,
+            'destination' => $destination,
             'class' => $post['class'],
             'master_price_id' => (int)$post['master_price_id'],
             'price' => $price['price'],
