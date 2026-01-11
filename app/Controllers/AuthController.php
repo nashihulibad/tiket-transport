@@ -58,7 +58,12 @@ class AuthController extends BaseController
             'region_id'    => $user['region_id'] ? (int)$user['region_id'] : null,
         ]);
 
-        return redirect()->to('/')->with('success', 'Login berhasil.');
+        // redirect sesuai role
+        if ($user['role_code'] === 'customer') {
+            return redirect()->to('/orders')->with('success', 'Login berhasil.');
+        }
+
+        return redirect()->to('/tickets')->with('success', 'Login berhasil.');
     }
 
     public function logout()

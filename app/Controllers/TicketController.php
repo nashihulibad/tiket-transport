@@ -21,7 +21,7 @@ class TicketController extends BaseController
     {
         $roleCode = session()->get('role_code');
         if ($roleCode === 'customer') {
-            return redirect()->to('/')->with('error', 'Menu ini tidak boleh diakses oleh customer.');
+            print_r('Unauthorized'); exit;
         }
 
         return view('tickets/index', [
